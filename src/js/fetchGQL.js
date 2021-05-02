@@ -8,7 +8,10 @@ const fetchGraphql = async (query) => {
     body: JSON.stringify(query),
   };
   try {
-    const response = await fetch("http://localhost:3000/graphql", options);
+    const response = await fetch(
+      "https://env-3354092.jelastic.metropolia.fi/graphql",
+      options
+    );
     const json = await response.json();
     return json.data;
   } catch (e) {
@@ -28,7 +31,10 @@ const addGraphql = async (query, token) => {
     body: JSON.stringify(query),
   };
   try {
-    const response = await fetch("http://localhost:3000/graphql", options);
+    const response = await fetch(
+      "https://env-3354092.jelastic.metropolia.fi/graphql",
+      options
+    );
     const json = await response.json();
     return json.data;
   } catch (e) {
