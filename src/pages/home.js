@@ -1,6 +1,10 @@
 import React, { PropTypes, useEffect, useState, useContext } from "react";
 import { withRouter } from "react-router-dom";
-import { getUsersDestinations, addDestination } from "../js/fetchGQL";
+import {
+  getUsersDestinations,
+  addDestination,
+  deleteDestination,
+} from "../js/fetchGQL";
 
 import "leaflet/dist/leaflet.css";
 import { Link } from "react-router-dom";
@@ -10,6 +14,7 @@ import DestinationModal from "../components/destinationModal";
 import { makeStyles } from "@material-ui/core/styles";
 import { Card, Button } from "@material-ui/core";
 import TextField from "@material-ui/core/TextField";
+import Typography from "@material-ui/core/Typography";
 
 //LEAFLET
 import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
@@ -26,6 +31,11 @@ const useStyles = makeStyles((theme) => ({
     justifyContent: "center",
     alignItems: "center",
     flexDirection: "column",
+  },
+  pageTitle: {
+    color: "#000",
+    margin: "15px 0",
+    fontSize: "25px",
   },
   conatinerHeader: {
     display: "flex",
@@ -51,8 +61,7 @@ const useStyles = makeStyles((theme) => ({
     OObjectFit: "cover",
   },
   destinationHeader: {
-    margin: "12px",
-
+    width: "45%",
     display: "flex",
     justifyContent: "space-around",
     alignItems: "center",
@@ -65,6 +74,7 @@ const useStyles = makeStyles((theme) => ({
   },
   destinationName: {
     margin: "0",
+    fontSize: "25px",
   },
   map: {
     flex: "1",
@@ -160,7 +170,6 @@ const Home = ({ history }) => {
   const classes = useStyles();
   let token = localStorage.getItem("FBIdToken");
   let auth = false;
-  console.log(user);
   if (token != null) {
     auth = true;
   }
@@ -169,9 +178,8 @@ const Home = ({ history }) => {
     if (user) {
       const fetcData = async () => {
         try {
-          console.log(user.id);
           const allUsersDestinations = await getUsersDestinations(user.id);
-          console.log(allUsersDestinations);
+
           setInit(allUsersDestinations);
         } catch (e) {
           console.log(e.message);
@@ -216,15 +224,25 @@ const Home = ({ history }) => {
       };
     });
   };
+  const deleteObject = async (id) => {
+    if (id) {
+      console.log(id);
+      await deleteDestination(id, user.token);
+      const allUsersDestinations = await getUsersDestinations(user.id);
+      console.log(allUsersDestinations);
+      setInit(allUsersDestinations);
+    }
+  };
 
   return (
     <>
       {auth !== false ? (
         <div className={classes.conatiner}>
           <div className={classes.conatinerHeader}>
-            <h3 className={classes.destinationName}>
+            <Typography variant="h2" className={classes.destinationName}>
               Your destinations {user.username}
-            </h3>
+            </Typography>
+
             <Button
               variant="contained"
               color="primary"
@@ -235,38 +253,56 @@ const Home = ({ history }) => {
               +
             </Button>
           </div>
-          {init.map((destination) => {
-            console.log(destination);
-            return (
-              <Card key={destination.id} className={classes.card}>
-                <div className={classes.cardheader}>
-                  <div className={classes.destinationHeader}>
-                    <h3 className={classes.destinationName}>
-                      {destination.name}
-                    </h3>
-                  </div>
-                  <DestinationModal
-                    destination={destination.id}
-                    user={{ user }}
-                  ></DestinationModal>
-                </div>
-                <MapContainer
-                  center={[
-                    destination.DestinationLocation.coordinates[0],
-                    destination.DestinationLocation.coordinates[1],
-                  ]}
-                  zoom={9}
-                  scrollWheelZoom={false}
-                  className={classes.map}
-                >
-                  <TileLayer
-                    attribution='&copy; <a href="http://osm.org/copyright">OpenStreetMap</a> contributors'
-                    url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-                  />
-                </MapContainer>
-              </Card>
-            );
-          })}
+          {init.length > 0 ? (
+            <>
+              {init.map((destination) => {
+                return (
+                  <Card key={destination.id} className={classes.card}>
+                    <div className={classes.cardheader}>
+                      <div className={classes.destinationHeader}>
+                        <h3 className={classes.destinationName}>
+                          {destination.name}
+                        </h3>
+                        <Button
+                          variant="contained"
+                          color="secondary"
+                          onClick={() => {
+                            deleteObject(destination.id);
+                          }}
+                        >
+                          Delete
+                        </Button>
+                      </div>
+                      <DestinationModal
+                        destination={destination.id}
+                        user={{ user }}
+                      ></DestinationModal>
+                    </div>
+                    <MapContainer
+                      center={[
+                        destination.DestinationLocation.coordinates[0],
+                        destination.DestinationLocation.coordinates[1],
+                      ]}
+                      zoom={9}
+                      scrollWheelZoom={false}
+                      className={classes.map}
+                    >
+                      <TileLayer
+                        attribution='&copy; <a href="http://osm.org/copyright">OpenStreetMap</a> contributors'
+                        url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                      />
+                    </MapContainer>
+                  </Card>
+                );
+              })}
+            </>
+          ) : (
+            <div>
+              <Typography variant="h2" className={classes.pageTitle}>
+                You dont have any destinations!
+              </Typography>
+            </div>
+          )}
           {open && init && (
             <>
               <div className={classes.backdrop}>

@@ -1,9 +1,9 @@
-import React, { useState } from "react";
+import React, { useState, useContext } from "react";
 import { withRouter } from "react-router-dom";
 import PropTypes from "prop-types";
 
 import { Link } from "react-router-dom";
-
+import { MediaContext } from "../context/mediaContext";
 import { register } from "../js/fetchGQL";
 // MUI Stuff
 import Grid from "@material-ui/core/Grid";
@@ -31,6 +31,7 @@ const useStyles = makeStyles((theme) => ({
     margin: "20px, auto 20px auto",
   },
   pageTitle: {
+    color: "#000",
     margin: "15px 0",
   },
   textField: {
@@ -39,9 +40,13 @@ const useStyles = makeStyles((theme) => ({
   button: {
     marginTop: 20,
   },
+  links: {
+    color: "#000",
+  },
 }));
 const Register = ({ history }) => {
   const classes = useStyles();
+  const [user, setUser] = useContext(MediaContext);
   console.log("Register");
   const [inputs, setInputs] = useState({
     username: "",
@@ -53,8 +58,9 @@ const Register = ({ history }) => {
       event.preventDefault();
       try {
         const userData = await register(inputs);
-        console.log("hallloo");
+        console.log(inputs);
         if (userData.token !== undefined) {
+          setUser(userData);
           localStorage.setItem("FBIdToken", `Bearer ${userData.token}`);
           history.push("/home");
           console.log("hallloo");
@@ -125,8 +131,8 @@ const Register = ({ history }) => {
               Register
             </Button>
             <br />
-            <small>
-              have an account ? Login <Link to="/">here</Link>
+            <small className={classes.links}>
+              Have an account ? Login <Link to="/">here</Link>
             </small>
           </form>
         </Grid>

@@ -1,5 +1,3 @@
-import { useState, useEffect } from "react";
-
 const fetchGraphql = async (query) => {
   const options = {
     method: "POST",
@@ -68,7 +66,6 @@ export const getAllDestinations = async () => {
   return data.Destinations;
 };
 export const getUsersDestinations = async (userId) => {
-  console.log(userId);
   const query = {
     query: `
  {
@@ -91,12 +88,11 @@ export const getUsersDestinations = async (userId) => {
         `,
   };
   const data = await fetchGraphql(query);
-  console.log("users", data);
+  console.log(data);
   return data.specifyDestinations;
 };
 
 export const getDestination = async (id) => {
-  console.log(id);
   const query = {
     query: `
 {
@@ -190,8 +186,6 @@ mutation {
 };
 
 export const addDestination = async (destination, token) => {
-  console.log("uusi d", destination);
-  console.log("uusi d", token);
   const query = {
     query: `
 mutation {
@@ -213,4 +207,60 @@ mutation {
   const data = await addGraphql(query, token);
   console.log(data);
   return data.addDestination;
+};
+
+export const deleteDestination = async (destinationID, token) => {
+  const query = {
+    query: `
+mutation {
+  deleteDestination(id: "${destinationID}") {
+    id
+  }
+}
+
+        `,
+  };
+  const data = await addGraphql(query, token);
+  console.log(data);
+  return data.Destination;
+};
+//deleteAttraction
+
+export const deleteAttraction = async (attID, token) => {
+  const query = {
+    query: `
+mutation {
+  deleteAttraction(id: "${attID}") {
+    id
+  }
+}
+
+
+        `,
+  };
+  const data = await addGraphql(query, token);
+  console.log(data);
+  return data.attraction;
+};
+
+export const modifyAttraction = async (modifyAttraction, token) => {
+  const query = {
+    query: `
+mutation {
+  modifyAttraction(
+    id: "${modifyAttraction.id}"
+    name: "${modifyAttraction.name}"
+    type: "${modifyAttraction.type}"
+      AttractionLocation: { coordinates: [ ${modifyAttraction.AttractionLocation.coordinates[0]}, ${modifyAttraction.AttractionLocation.coordinates[1]}] }
+  ) {
+    name
+    type
+  }
+}
+        `,
+  };
+  const data = await addGraphql(query, token);
+
+  console.log(data);
+  return data.modifyAttraction;
 };

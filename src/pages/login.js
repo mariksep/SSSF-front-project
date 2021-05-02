@@ -132,7 +132,7 @@ const Login = ({ history }) => {
               </Button>
               <br />
               <small className={classes.links}>
-                Dont have an account ? sign up <Link to="/signup">here</Link>
+                Dont have an account ? sign up <Link to="/register">here</Link>
               </small>
             </form>
           </Grid>
