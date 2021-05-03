@@ -270,3 +270,23 @@ mutation {
   console.log(data);
   return data.modifyAttraction;
 };
+//modifyDestination
+export const modifyDestination = async (modifyDest, token) => {
+  const query = {
+    query: `
+mutation {
+  modifyDestination(
+    id: "${modifyDest.id}"
+    name: "${modifyDest.name}"
+      DestinationLocation: { coordinates: [ ${modifyDest.DestinationLocation.coordinates[0]}, ${modifyDest.DestinationLocation.coordinates[1]}] }
+  ) {
+    name
+  }
+}
+        `,
+  };
+  const data = await addGraphql(query, token);
+
+  console.log(data);
+  return data.modifyAttraction;
+};

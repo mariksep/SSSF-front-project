@@ -4,12 +4,14 @@ import {
   getUsersDestinations,
   addDestination,
   deleteDestination,
+  modifyDestination,
 } from "../js/fetchGQL";
 
 import "leaflet/dist/leaflet.css";
 import { Link } from "react-router-dom";
 import { MediaContext } from "../context/mediaContext";
 import DestinationModal from "../components/destinationModal";
+
 // MUI Stuff
 import { makeStyles } from "@material-ui/core/styles";
 import { Card, Button } from "@material-ui/core";
@@ -49,6 +51,15 @@ const useStyles = makeStyles((theme) => ({
     display: "flex",
     flexDirection: "column",
     height: "300px",
+    width: "540px",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  modifycard: {
+    margin: "2rem",
+    display: "flex",
+    flexDirection: "column",
+    height: "500px",
     width: "540px",
     justifyContent: "center",
     alignItems: "center",
@@ -161,12 +172,17 @@ const useStyles = makeStyles((theme) => ({
   buttonAdd: {
     margin: "1rem 0",
   },
+  inputname: {
+    display: "none",
+  },
 }));
 
 const Home = ({ history }) => {
   const [user, setUser] = useContext(MediaContext);
   const [init, setInit] = useState([]);
   const [open, setOpen] = useState(false);
+  const [openModify, setOpenModify] = useState(false);
+  const [modifyItem, setModifyItem] = useState();
   const classes = useStyles();
   let token = localStorage.getItem("FBIdToken");
   let auth = false;
@@ -197,7 +213,33 @@ const Home = ({ history }) => {
       coordinates: ["", ""],
     },
   });
+  const [modifyinputs, setModifyInputs] = useState({
+    id: "",
+    name: "",
+    DestinationLocation: {
+      coordinates: ["", ""],
+    },
+  });
+  let coordsModify = [];
+  /*MODIFY*/
+  if (modifyinputs.DestinationLocation.coordinates[0].lenght == undefined) {
+    console.log("halloo");
+    if (modifyItem) {
+      coordsModify = [
+        modifyItem.DestinationLocation.coordinates[0],
+        modifyItem.DestinationLocation.coordinates[1],
+      ];
+    } else {
+      coordsModify = [34, 40];
+    }
+  } else {
+    coordsModify = [
+      modifyinputs.AttractionLocation.coordinates[0],
+      modifyinputs.AttractionLocation.coordinates[1],
+    ];
+  }
 
+  /*ADD*/
   const handlesubmit = async (event) => {
     console.log(inputs);
     if (event) {
@@ -224,6 +266,29 @@ const Home = ({ history }) => {
       };
     });
   };
+  /*MODIFY*/
+  const handleModifySubmit = async (event) => {
+    if (event) {
+      event.preventDefault();
+      console.log(modifyinputs);
+      await modifyDestination(modifyinputs, user.token);
+      const allUsersDestinations = await getUsersDestinations(user.id);
+      console.log("halloo", allUsersDestinations);
+      setInit(allUsersDestinations);
+      await setOpenModify(false);
+    }
+  };
+
+  const handleModifyInputChange = (event) => {
+    event.persist();
+    setModifyInputs((modifyinputs) => {
+      return {
+        ...modifyinputs,
+        [event.target.name]: event.target.value,
+      };
+    });
+  };
+  /*Delete*/
   const deleteObject = async (id) => {
     if (id) {
       console.log(id);
@@ -257,42 +322,148 @@ const Home = ({ history }) => {
             <>
               {init.map((destination) => {
                 return (
-                  <Card key={destination.id} className={classes.card}>
-                    <div className={classes.cardheader}>
-                      <div className={classes.destinationHeader}>
-                        <h3 className={classes.destinationName}>
-                          {destination.name}
-                        </h3>
-                        <Button
-                          variant="contained"
-                          color="secondary"
-                          onClick={() => {
-                            deleteObject(destination.id);
-                          }}
-                        >
-                          Delete
-                        </Button>
+                  <>
+                    <Card key={destination.id} className={classes.card}>
+                      <div className={classes.cardheader}>
+                        <div className={classes.destinationHeader}>
+                          <h3 className={classes.destinationName}>
+                            {destination.name}
+                          </h3>
+                          <Button
+                            variant="contained"
+                            color="secondary"
+                            onClick={() => {
+                              deleteObject(destination.id);
+                            }}
+                          >
+                            Delete
+                          </Button>
+                          <Button
+                            variant="contained"
+                            color="primary"
+                            onClick={() => {
+                              setModifyItem(destination);
+                              setOpenModify(true);
+                            }}
+                          >
+                            Modify
+                          </Button>
+                        </div>
+                        <DestinationModal
+                          destination={destination.id}
+                          user={{ user }}
+                        ></DestinationModal>
                       </div>
-                      <DestinationModal
-                        destination={destination.id}
-                        user={{ user }}
-                      ></DestinationModal>
-                    </div>
-                    <MapContainer
-                      center={[
-                        destination.DestinationLocation.coordinates[0],
-                        destination.DestinationLocation.coordinates[1],
-                      ]}
-                      zoom={9}
-                      scrollWheelZoom={false}
-                      className={classes.map}
-                    >
-                      <TileLayer
-                        attribution='&copy; <a href="http://osm.org/copyright">OpenStreetMap</a> contributors'
-                        url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-                      />
-                    </MapContainer>
-                  </Card>
+                      <MapContainer
+                        center={[
+                          destination.DestinationLocation.coordinates[0],
+                          destination.DestinationLocation.coordinates[1],
+                        ]}
+                        zoom={9}
+                        scrollWheelZoom={false}
+                        className={classes.map}
+                      >
+                        <TileLayer
+                          attribution='&copy; <a href="http://osm.org/copyright">OpenStreetMap</a> contributors'
+                          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                        />
+                      </MapContainer>
+                    </Card>
+                    {openModify && (
+                      <>
+                        <div className={classes.backdrop}>
+                          <Card className={classes.modifycard}>
+                            <div className={classes.header}>
+                              <Button
+                                type="button"
+                                variant="contained"
+                                color="primary"
+                                onClick={() => {
+                                  setOpenModify(false);
+                                }}
+                              >
+                                Close
+                              </Button>
+                              <h2 className={classes.title}>
+                                Modify Destination
+                              </h2>
+                            </div>
+                            <form
+                              onSubmit={handleModifySubmit}
+                              className={classes.form}
+                            >
+                              <div className={classes.formdiv}>
+                                <TextField
+                                  fullWidth
+                                  className={classes.inputname}
+                                  label="id"
+                                  name="id"
+                                  value={(modifyinputs.id = destination.id)}
+                                  onChange={handleModifyInputChange}
+                                  type="text"
+                                  autoComplete="current-Usernname"
+                                  variant="outlined"
+                                />
+                                <TextField
+                                  fullWidth
+                                  className={classes.inputs}
+                                  label="Destinations new name?"
+                                  name="name"
+                                  value={modifyinputs.name.lenght}
+                                  onChange={handleModifyInputChange}
+                                  type="text"
+                                  autoComplete="current-Usernname"
+                                  variant="outlined"
+                                />
+                              </div>
+                              <div id="mapid">
+                                <MapContainer
+                                  className="map"
+                                  center={[
+                                    destination.DestinationLocation
+                                      .coordinates[0],
+                                    destination.DestinationLocation
+                                      .coordinates[1],
+                                  ]}
+                                  zoom={2}
+                                  scrollWheelZoom={false}
+                                >
+                                  <TileLayer
+                                    attribution='&copy; <a href="http://osm.org/copyright">OpenStreetMap</a> contributors'
+                                    url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                                  />
+                                  {inputs.DestinationLocation !== 0 && (
+                                    <>
+                                      <Marker
+                                        draggable={true}
+                                        eventHandlers={{
+                                          drag: (e) => {
+                                            modifyinputs.DestinationLocation.coordinates[0] =
+                                              e.latlng.lat;
+                                            modifyinputs.DestinationLocation.coordinates[1] =
+                                              e.latlng.lng;
+                                          },
+                                        }}
+                                        position={coordsModify}
+                                        icon={DefaultIcon}
+                                      ></Marker>
+                                    </>
+                                  )}
+                                </MapContainer>
+                              </div>
+                              <Button
+                                type="submit"
+                                variant="contained"
+                                color="primary"
+                              >
+                                Modify
+                              </Button>
+                            </form>
+                          </Card>
+                        </div>
+                      </>
+                    )}
+                  </>
                 );
               })}
             </>
